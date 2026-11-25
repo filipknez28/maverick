@@ -172,10 +172,11 @@ footer a:hover{text-decoration:underline}
     <div class="recgrid">
       <div class="rec"><b>Najboljša moč kadarkoli</b><span id="recBest">···</span></div>
       <div class="rec"><b>Najdaljša seja</b><span id="recLong">···</span></div>
+      <div class="rec"><b>Najtežji diff kadarkoli</b><span id="recDiff">···</span></div>
       <div class="rec"><b>Številke sej</b><span id="recCount">···</span></div>
     </div>
     <div id="sessList"></div>
-    <div class="hint">Zapisovanje poteka, medtem ko je stran odprta. Seja se zaključi, ko majnanje umre 5 minut. Podatki ostanejo v tvojem brskalniku.</div>
+    <div class="hint">Seje so vezane na poolov "povezan od": dolžina seje je prava tudi, ko je stran zaprta. Najboljšo moč in najtežji diff zapiše vsakič, ko stran prebere podatke s poola. Nova seja se začne, ko se Maverick znova poveže na pool.</div>
     <button class="clear" id="clearHist">Počisti zgodovino</button>
   </div>
 </div>
@@ -252,54 +253,64 @@ function pushHist(v){
   drawSpark();
 }
 
-/* seje: zapis dejanskega majnanja, dokler je stran odprta */
+/* seje: vezane na poolov "povezan od" (authorised), dolžina je prava tudi, ko je stran zaprta */
 let sess=null,done=[];
 try{
   sess=JSON.parse(localStorage.getItem('maverick_sess')||'null');
   done=JSON.parse(localStorage.getItem('maverick_sessions')||'[]');
 }catch(e){}
-const now0=Date.now();
-if(sess&&sess.active&&now0-sess.last>GAP){sess.end=sess.last;sess.active=false;done.push(sess);sess=null;saveS();}
+if(sess&&!sess.auth){done.push({start:sess.start,end:sess.last,best:sess.best||0,bestDiff:sess.bestDiff||0,sum:sess.sum||0,n:sess.n||0});sess=null;}
 function saveS(){try{localStorage.setItem('maverick_sess',JSON.stringify(sess));localStorage.setItem('maverick_sessions',JSON.stringify(done));}catch(e){}}
-function trackSession(active,h){
+function trackSession(active,h,bd,auth){
   const now=Date.now();
-  if(active){
-    if(!sess||!sess.active)sess={start:now,last:now,best:0,sum:0,n:0,active:true};
+  if(auth>0){
+    if(!sess||sess.auth!==auth){
+      if(sess&&(sess.best>0||sess.n>0)){sess.end=auth*1000;done.push(sess);if(done.length>60)done=done.slice(-60);}
+      sess={auth:auth,start:auth*1000,best:0,bestDiff:0,sum:0,n:0,last:now};
+    }
+    if(active){
+      if(h>sess.best)sess.best=h;
+      if(h>0){sess.sum+=h;sess.n++;}
+      if(bd>sess.bestDiff)sess.bestDiff=bd;
+    }
+    sess.last=now;saveS();
+  }else if(sess&&active){
     if(h>sess.best)sess.best=h;
     if(h>0){sess.sum+=h;sess.n++;}
     sess.last=now;saveS();
-  }else if(sess&&sess.active&&now-sess.last>GAP){
-    sess.end=sess.last;sess.active=false;done.push(sess);
-    if(done.length>60)done=done.slice(-60);sess=null;saveS();
+  }else if(sess&&now-sess.last>GAP){
+    sess.end=sess.last;done.push(sess);if(done.length>60)done=done.slice(-60);sess=null;saveS();
   }
   renderMenu();
 }
-function allSessions(){const a=done.slice();if(sess&&sess.active)a.push(sess);return a;}
+function allSessions(){const a=done.slice();if(sess)a.push(sess);return a;}
 function renderMenu(){
   const list=allSessions();
-  let bestAll=0,longMs=0;
+  let bestAll=0,bdAll=0,longMs=0;
   for(const s of list){
     if(s.best>bestAll)bestAll=s.best;
+    if((s.bestDiff||0)>bdAll)bdAll=s.bestDiff;
     const e=s.end||s.last;const d=Math.max(0,e-s.start);
     if(d>longMs)longMs=d;
   }
   $('recBest').textContent=bestAll>0?fmtH(bestAll):'···';
+  $('recDiff').textContent=bdAll>0?bdAll.toLocaleString('sl-SI',{maximumFractionDigits:3}):'···';
   $('recLong').textContent=longMs>0?dur(longMs):'···';
   $('recCount').textContent=list.length?String(list.length):'···';
   const el=$('sessList');
-  if(!list.length){el.innerHTML='<div class="empty">Še ni zapisanih sej. Ko stran pusti odprto, medtem ko Maverick majna, se seje začnejo zapisovati same.</div>';return;}
+  if(!list.length){el.innerHTML='<div class="empty">Še ni zapisanih sej. Seje beležim samodejno, vezane na poolov "povezan od".</div>';return;}
   const rows=[];
   const fmtT=t=>new Date(t).toLocaleTimeString('sl-SI',{hour:'2-digit',minute:'2-digit'});
   const fmtD=t=>new Date(t).toLocaleDateString('sl-SI',{day:'numeric',month:'short'});
-  if(sess&&sess.active){
-    const e=sess.last,d=Math.max(0,e-sess.start),avg=sess.n?sess.sum/sess.n:0;
+  if(sess){
+    const d=Math.max(0,Date.now()-sess.start),avg=sess.n?sess.sum/sess.n:0;
     rows.push('<div class="sess cur"><div class="when"><span class="tag">trenutna seja</span> · '+fmtD(sess.start)+' '+fmtT(sess.start)+' → zdaj</div>'+
-      '<div class="num"><span>dolžina <em>'+dur(d)+'</em></span><span>povprečje <em>'+fmtH(avg)+'</em></span><span>najboljše <em>'+fmtH(sess.best)+'</em></span></div></div>');
+      '<div class="num"><span>dolžina <em>'+dur(d)+'</em></span><span>povprečje <em>'+fmtH(avg)+'</em></span><span>najboljše <em>'+(sess.best>0?fmtH(sess.best):'···')+'</em></span><span>max diff <em>'+(sess.bestDiff>0?sess.bestDiff.toLocaleString('sl-SI',{maximumFractionDigits:3}):'···')+'</em></span></div></div>');
   }
   for(let i=done.length-1;i>=0;i--){
     const s=done[i],e=s.end||s.last,d=Math.max(0,e-s.start),avg=s.n?s.sum/s.n:0;
     rows.push('<div class="sess"><div class="when">'+fmtD(s.start)+' '+fmtT(s.start)+' → '+fmtT(e)+'</div>'+
-      '<div class="num"><span>dolžina <em>'+dur(d)+'</em></span><span>povprečje <em>'+fmtH(avg)+'</em></span><span>najboljše <em>'+fmtH(s.best)+'</em></span></div></div>');
+      '<div class="num"><span>dolžina <em>'+dur(d)+'</em></span><span>povprečje <em>'+fmtH(avg)+'</em></span><span>najboljše <em>'+(s.best>0?fmtH(s.best):'···')+'</em></span><span>max diff <em>'+(s.bestDiff>0?s.bestDiff.toLocaleString('sl-SI',{maximumFractionDigits:3}):'···')+'</em></span></div></div>');
   }
   el.innerHTML=rows.join('');
 }
@@ -321,7 +332,7 @@ function paint(j,net){
   $('dot').className='dot'+(active?' on':'');
   $('state').textContent=active?'majna':'čaka na delo …';
   pushHist(showH);
-  trackSession(active,showH);
+  trackSession(active,showH,j.bestshare||0,j.authorised||0);
   /* loterija */
   const D=net.currentDifficulty||0,nh=net.currentHashrate||0;
   if(D>0&&showH>0){
@@ -351,7 +362,7 @@ async function tick(){
 }
 function demoData(){const h=Math.round(560+Math.random()*180)*1e3;
   return{hashrate1m:String(Math.round(h/1000))+'K',hashrate5m:String(Math.round(h*0.8/1000))+'K',hashrate1h:String(Math.round(h*0.5/1000))+'K',hashrate1d:'6.41K',hashrate7d:'922',
-    shares:131+Math.floor(Math.random()*40),bestever:0.098,lastshare:Math.floor(Date.now()/1000)-40,
+    shares:131+Math.floor(Math.random()*40),bestever:0.098,bestshare:0.098,lastshare:Math.floor(Date.now()/1000)-40,
     authorised:Math.floor(Date.now()/1000)-1700};}
 function demoNet(){return{currentDifficulty:1.348e14,currentHashrate:9.7e20};}
 
