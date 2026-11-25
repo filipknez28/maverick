@@ -478,8 +478,8 @@ spSvg.addEventListener('pointerleave',()=>{if(!spDrag)sparkHide();});
 function paint(j,net){
   const h1m=parseH(j.hashrate1m),h5m=parseH(j.hashrate5m),h1h=parseH(j.hashrate1h),h1d=parseH(j.hashrate1d),h7d=parseH(j.hashrate7d);
   const nows=Math.floor(Date.now()/1000);
-  const freshShare=j.lastshare&&nows-j.lastshare<900;
-  const active=h1m>0||h5m>0||freshShare;
+  const freshShare=j.lastshare&&nows-j.lastshare<150; /* zadnji del starejši od 2,5 min = naprava ne pošilja več */
+  const active=freshShare; /* h1m/h5m sta drseči povprečji in ugasneta šele čez nekaj minut, zato ju ne uporabljam za status */
   const showH=h1m>0?h1m:h5m;
   $('hNow').textContent=(showH/1e3).toLocaleString('sl-SI',{maximumFractionDigits:0});
   $('hNowUnit').textContent='kH/s';
