@@ -316,9 +316,31 @@ let view=[]; /* trenutno prikazane točke (glede na izbrano obdobje) */
 const RANGES=[3600000,21600000,86400000];
 let RANGE=parseInt(localStorage.getItem('maverick_range')||'3600000',10);
 if(!RANGES.includes(RANGE))RANGE=3600000;
+let poolHist=[];try{poolHist=JSON.parse(localStorage.getItem('maverick_poolhist')||'[]');}catch(e){}
+function parsePoolCSV(txt){
+  const u={'':1,'K':1e3,'M':1e6,'G':1e9,'T':1e12};
+  const out=[];
+  txt.trim().split(/\r?\n/).slice(1).forEach(l=>{
+    const p=l.split(',');if(p.length<3)return;
+    const t=parseInt(p[0],10);if(!t)return;
+    const v=parseFloat(p[1])*(u[p[2]]||1);
+    if(v>0)out.push({t:t,v:v});
+  });
+  return out;
+}
+async function loadPoolHist(){
+  try{
+    const r=await fetch('/api/history');if(!r.ok)return;
+    const rows=parsePoolCSV(await r.text());
+    if(rows.length){poolHist=rows;try{localStorage.setItem('maverick_poolhist',JSON.stringify(rows));}catch(e){}drawSpark();}
+  }catch(e){}
+}
+loadPoolHist();setInterval(loadPoolHist,5*60*1000);
 function sparkPts(range){
   const now=Date.now();
-  const win=hist.filter(p=>now-p.t<=range);
+  const fine=hist.filter(p=>now-p.t<=range);
+  const coarse=poolHist.filter(p=>now-p.t<=range&&!fine.some(q=>Math.abs(q.t-p.t)<5*60*1000));
+  let win=fine.concat(coarse).sort((a,b)=>a.t-b.t);
   if(win.length<2)return [];
   if(win.length<=620)return win;
   const out=[],step=win.length/620;
@@ -328,7 +350,7 @@ function sparkPts(range){
 function updCap(){
   const c=$('sparkCap');if(!c)return;
   const name=RANGE===3600000?'1 ura':(RANGE===21600000?'6 ur':'24 ur');
-  let t='Potek moči ('+name+') · zapis se dela, medtem ko je stran odprta, do 24 ur';
+  let t='Potek moči ('+name+') · podatki s poola (vsakih ~15 min) + natančen zapis med ogledom strani';
   if(view.length>1&&Date.now()-view[0].t<RANGE-30000)t+=' · podatki od '+new Date(view[0].t).toLocaleTimeString('sl-SI',{hour:'2-digit',minute:'2-digit'});
   c.textContent=t;
 }
@@ -338,7 +360,8 @@ function drawSpark(){
   view=sparkPts(RANGE);
   if(view.length<2){el.setAttribute('points','');fl.setAttribute('d','');updCap();return;}
   const vs=view.map(p=>p.v),mx=Math.max(...vs,1),mn=Math.min(...vs);
-  const pts=view.map((p,i)=>{const x=i/(view.length-1)*600;const y=88-((p.v-mn)/(mx-mn||1))*78;return x.toFixed(1)+','+y.toFixed(1);});
+  const t0=view[0].t,t1=view[view.length-1].t;
+  const pts=view.map(p=>{const x=(p.t-t0)/((t1-t0)||1)*600;const y=88-((p.v-mn)/(mx-mn||1))*78;return x.toFixed(1)+','+y.toFixed(1);});
   el.setAttribute('points',pts.join(' '));
   fl.setAttribute('d','M0,96 L'+pts.join(' L')+' L600,96 Z');
   updCap();
@@ -433,14 +456,17 @@ function sparkShow(e){
   if(!spSvg||view.length<2)return;
   const r=spSvg.getBoundingClientRect();
   const f=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
-  const i=Math.round(f*(view.length-1)),p=view[i];
   const vs=view.map(q=>q.v),mx=Math.max(...vs,1),mn=Math.min(...vs);
-  const x=(i/(hist.length-1)*600).toFixed(1);
+  const t0=view[0].t,t1=view[view.length-1].t;
+  let i=0,bd=1e9;const xs=f*600;
+  for(let k=0;k<view.length;k++){const dx=Math.abs((view[k].t-t0)/((t1-t0)||1)*600-xs);if(dx<bd){bd=dx;i=k;}}
+  const p=view[i];
+  const x=((p.t-t0)/((t1-t0)||1)*600).toFixed(1);
   const y=88-((p.v-mn)/(mx-mn||1))*78;
   spCross.setAttribute('x1',x);spCross.setAttribute('x2',x);spCross.setAttribute('visibility','visible');
   spDot.setAttribute('cx',x);spDot.setAttribute('cy',y.toFixed(1));spDot.setAttribute('visibility','visible');
   spTip.textContent=fmtH(p.v)+' · '+new Date(p.t).toLocaleTimeString('sl-SI',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  spTip.style.left=(i/(view.length-1)*100)+'%';
+  spTip.style.left=((p.t-t0)/((t1-t0)||1)*100)+'%';
   spTip.style.top=y.toFixed(1)+'px';
   spTip.style.visibility='visible';
 }
