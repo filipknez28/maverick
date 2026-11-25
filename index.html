@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maverick · NerdMiner Dashboard</title>
+<meta name="description" content="Live statistika mojega NerdMinerja na pool.nerdminers.org">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛏️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#111722; --panel2:#0d131d; --line:#1d2635;
+    --txt:#e8edf5; --dim:#8b98ab; --orange:#f7931a; --orange2:#ffb347;
+    --green:#2ecc71; --amber:#f1c40f; --red:#e74c3c; --mono:'JetBrains Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:radial-gradient(1200px 500px at 70% -10%, #1a2334 0%, var(--bg) 60%);
+    color:var(--txt); font-family:'Inter',sans-serif; min-height:100vh; padding:24px 16px 48px;
+  }
+  .wrap{max-width:960px;margin:0 auto}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--orange),#b35400);
+        display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 8px 30px rgba(247,147,26,.25)}
+  h1{font-size:26px;font-weight:800;letter-spacing:.5px}
+  h1 span{color:var(--orange)}
+  .sub{color:var(--dim);font-size:13px;margin-top:2px}
+  .status{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--dim)}
+  .dot.on{background:var(--green);box-shadow:0 0 0 0 rgba(46,204,113,.6);animation:pulse 2s infinite}
+  .dot.warm{background:var(--amber)}
+  .dot.off{background:var(--red)}
+  @keyframes pulse{70%{box-shadow:0 0 0 10px rgba(46,204,113,0)}}
+  .hero{
+    margin-top:20px;background:linear-gradient(160deg,var(--panel) 0%,var(--panel2) 100%);
+    border:1px solid var(--line);border-radius:20px;padding:28px 30px;position:relative;overflow:hidden;
+  }
+  .hero::after{content:'';position:absolute;inset:auto -60px -120px auto;width:280px;height:280px;
+    background:radial-gradient(circle,rgba(247,147,26,.12),transparent 70%);border-radius:50%}
+  .hero .lbl{color:var(--dim);font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+  .hero .big{font-family:var(--mono);font-size:52px;font-weight:800;line-height:1}
+  .hero .big small{font-size:22px;color:var(--orange);font-weight:600;margin-left:4px}
+  .hero .row{display:flex;gap:26px;flex-wrap:wrap;margin-top:16px;font-family:var(--mono);font-size:14px}
+  .hero .row b{color:var(--dim);font-family:'Inter';font-weight:500;font-size:12px;display:block;margin-bottom:2px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .card .lbl{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px}
+  .card .val{font-family:var(--mono);font-size:24px;font-weight:800}
+  .card .val small{font-size:14px;color:var(--dim);font-weight:400}
+  .card .foot{color:var(--dim);font-size:12px;margin-top:6px}
+  .lotto{margin-top:14px;background:linear-gradient(135deg,#161d2b,#0f1520);border:1px solid var(--line);
+    border-radius:16px;padding:20px 22px}
+  .lotto .lbl{color:var(--orange);font-size:11px;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}
+  .lotto .line{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed #1c2534;font-size:14px}
+  .lotto .line:last-child{border-bottom:none}
+  .lotto .line b{font-family:var(--mono)}
+  .lotto .note{color:var(--dim);font-size:12px;margin-top:10px}
+  footer{margin-top:26px;color:var(--dim);font-size:12px;display:flex;gap:14px;flex-wrap:wrap}
+  footer a{color:var(--orange);text-decoration:none}
+  .skel{color:var(--dim);font-family:var(--mono)}
+  @media(max-width:600px){.hero .big{font-size:40px}.hero{padding:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">⛏️</div>
+    <div>
+      <h1>NERD MINER <span>MAVERICK</span></h1>
+      <div class="sub">solo Bitcoin loterija · pool.nerdminers.org</div>
+    </div>
+    <div class="status"><span class="dot" id="dot"></span><span id="state">povezujem…</span></div>
+  </header>
+
+  <section class="hero">
+    <div class="lbl">Trenutni hashrate (1 min)</div>
+    <div class="big" id="hr1m"><span class="skel">···</span></div>
+    <div class="row">
+      <div><b>5 min</b><span id="hr5m" class="skel">···</span></div>
+      <div><b>1 ura</b><span id="hr1h" class="skel">···</span></div>
+      <div><b>24 h</b><span id="hr1d" class="skel">···</span></div>
+      <div><b>7 dni</b><span id="hr7d" class="skel">···</span></div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <div class="card"><div class="lbl">Delave (shares)</div><div class="val" id="shares"><span class="skel">···</span></div><div class="foot" id="workername">worker Maverick</div></div>
+    <div class="card"><div class="lbl">Najboljša dela (diff)</div><div class="val" id="bestdiff"><span class="skel">···</span></div><div class="foot">najboljša diff doslej</div></div>
+    <div class="card"><div class="lbl">Zadnja dela</div><div class="val" id="lastshare"><span class="skel">···</span></div><div class="foot" id="lastsharefoot"></div></div>
+    <div class="card"><div class="lbl">Online od</div><div class="val" id="uptime"><span class="skel">···</span></div><div class="foot">avtorizacija na poolu</div></div>
+  </div>
+
+  <section class="lotto">
+    <div class="lbl">🎰 Solo loterija</div>
+    <div class="line"><span>Tvoj delež omrežja</span><b id="netshare">···</b></div>
+    <div class="line"><span>Šansa za blok (dnevno)</span><b id="chance">···</b></div>
+    <div class="line"><span>Pričakovano: en blok na</span><b id="expect">···</b></div>
+    <div class="line"><span>Nagrada za blok</span><b>3,125 BTC</b></div>
+    <div class="note">Vsak share je en loterijski tiket. Nagrada gre celotna tistemu, ki najde blok (solo mining).</div>
+  </section>
+
+  <footer>
+    <span>Podatki: <a href="https://pool.nerdminers.org/users/bc1qun0x63c3zc58du3hdurz6zyfslyvxnua9yhsjg" target="_blank" rel="noopener">moj profil na poolu</a></span>
+    <span><a href="https://github.com/filipknez28/maverick" target="_blank" rel="noopener">GitHub repo</a></span>
+    <span>osveževanje vsakih 30 s</span>
+    <span id="updated"></span>
+  </footer>
+</div>
+
+<script>
+const SI=[['G',1e9],['M',1e6],['k',1e3],['',1]];
+const fmtN=(x,d=0)=>x.toLocaleString('sl-SI',{minimumFractionDigits:d,maximumFractionDigits:d});
+function parseHR(s){ if(typeof s!=='string')return 0; const m=s.trim().match(/^([\d.]+)([kKMGT]?)/i);
+  if(!m)return 0; let v=parseFloat(m[1]); const u=m[2].toLowerCase();
+  const f={k:1e3,m:1e6,g:1e9,t:1e12}[u]||1; return v*f; }
+function fmtHR(x){ if(!x)return '0 H/s'; for(const[u,f]of SI){ if(x>=f) return fmtN(x/f,x/f>=100?0:1)+' '+u+'H/s'; } return fmtN(x)+' H/s'; }
+function fmtAgo(ms){ const s=Math.max(0,Math.floor(ms/1000));
+  if(s<60)return s+' s';
+  const m=Math.floor(s/60); if(m<60)return m+' min';
+  const h=Math.floor(m/60); if(h<24)return h+' h '+(m%60)+' min';
+  const d=Math.floor(h/24); return d+' dni '+(h%24)+' h'; }
+function fmtSci(x){ if(x<=0)return '—';
+  const e=Math.floor(Math.log10(x)); const m=x/Math.pow(10,e);
+  const sup='⁰¹²³⁴⁵⁶⁷⁸⁹'; const es=String(e).split('').map(c=>c==='-'?'⁻':sup[+c]).join('');
+  return '1 : '+fmtN(m,1)+'×10'+es; }
+function fmtYears(y){ if(y<1)return 'manj kot leto';
+  const t=[[1e9,'milijard'],[1e6,'milijonov'],[1e3,'tisoč']].find(([v])=>y>=v);
+  return '~'+fmtN(y/t[0],y/t[0]<10?1:0)+' '+t[1]+' let'; }
+
+let last={}; // cached pool json
+async function getJSON(url){ const r=await fetch(url,{cache:'no-store'}); if(!r.ok)throw 0; return r.json(); }
+
+async function loadPool(){
+  try{
+    let j;
+    if(new URLSearchParams(location.search).has('demo')){
+      j={hashrate1m:'389K',hashrate5m:'267K',hashrate1hr:'36.3K',hashrate1d:'1.59K',hashrate7d:'227',
+         lastshare:Math.floor(Date.now()/1000)-95,workers:1,shares:33.0,bestshare:0.0422,bestever:0.0422,
+         authorised:Math.floor(Date.now()/1000)-7*3600,
+         worker:[{workername:'bc1qun0x…yhsjg.Maverick'}]};
+    }else{
+      j=await getJSON('/api/pool');
+    }
+    last=j;
+    const w=j.worker&&j.worker[0]?j.worker[0]:j;
+    document.getElementById('hr1m').innerHTML=fmtHR(parseHR(j.hashrate1m)).replace(/([kMGT]H\/s)/,'<small>$1</small>');
+    document.getElementById('hr5m').textContent=fmtHR(parseHR(j.hashrate5m));
+    document.getElementById('hr1h').textContent=fmtHR(parseHR(j.hashrate1hr));
+    document.getElementById('hr1d').textContent=fmtHR(parseHR(j.hashrate1d));
+    document.getElementById('hr7d').textContent=fmtHR(parseHR(j.hashrate7d));
+    document.getElementById('shares').textContent=fmtN(j.shares||0);
+    document.getElementById('bestdiff').textContent=fmtN(j.bestever||j.bestshare||0,3);
+    const wn=(w.workername?w.workername.split('.').pop():'Maverick');
+    document.getElementById('workername').textContent='worker '+wn;
+    const dot=document.getElementById('dot'), st=document.getElementById('state');
+    const ago=Date.now()/1000-(j.lastshare||0);
+    if(ago<300){dot.className='dot on';st.textContent='majna'}
+    else if(ago<3600){dot.className='dot warm';st.textContent='brez dela'}
+    else{dot.className='dot off';st.textContent='mimo (offline?)'}
+    tick();
+  }catch(e){
+    document.getElementById('state').textContent='pool ni dosegljiv';
+  }
+}
+async function loadBtc(){
+  try{
+    if(new URLSearchParams(location.search).has('demo')){
+      var j={currentHashrate:1.1e21,currentDifficulty:1.46e14};
+    }else{
+      var j=await getJSON('/api/btc');
+    }
+    if(!last)return;
+    const my=parseHR(last.hashrate1m)||1;
+    const net=j.currentHashrate||0;
+    document.getElementById('netshare').textContent=fmtSci(my/net*100)+' %';
+    document.getElementById('chance').textContent=fmtSci(my/net);
+    const sec=net/my; const yrs=sec/3.156e7;
+    document.getElementById('expect').textContent=fmtYears(yrs);
+  }catch(e){/* silent */}
+}
+function tick(){
+  if(!last)return;
+  const now=Date.now()/1000;
+  document.getElementById('lastshare').textContent=fmtAgo((now-(last.lastshare||now))*1000)+' nazaj';
+  document.getElementById('lastsharefoot').textContent='delo je teklo';
+  const up=(now-(last.authorised||now))*1000;
+  document.getElementById('uptime').textContent=fmtAgo(up);
+  document.getElementById('updated').textContent='· osveženo '+new Date().toLocaleTimeString('sl-SI');
+}
+setInterval(tick,1000);
+setInterval(loadPool,30000);
+setInterval(loadBtc,600000);
+loadPool().then(loadBtc);
+</script>
+</body>
+</html>

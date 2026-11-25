@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/pool", "destination": "https://pool.nerdminers.org/users/bc1qun0x63c3zc58du3hdurz6zyfslyvxnua9yhsjg" },
+    { "source": "/api/btc", "destination": "https://mempool.space/api/v1/mining/hashrate/3d" }
+  ]
+}
