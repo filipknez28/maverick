@@ -304,7 +304,7 @@ function renderMenu(){
   el.innerHTML=rows.join('');
 }
 function paint(j,net){
-  const h1m=parseH(j.hashrate1m)||0,h5m=parseH(j.hashrate5m)||0;
+  const h1m=parseH(j.hashrate1m),h5m=parseH(j.hashrate5m),h1h=parseH(j.hashrate1h),h1d=parseH(j.hashrate1d),h7d=parseH(j.hashrate7d);
   const nows=Math.floor(Date.now()/1000);
   const freshShare=j.lastshare&&nows-j.lastshare<900;
   const active=h1m>0||h5m>0||freshShare;
@@ -312,8 +312,8 @@ function paint(j,net){
   $('hNow').textContent=(showH/1e3).toLocaleString('sl-SI',{maximumFractionDigits:0});
   $('hNowUnit').textContent='kH/s';
   $('hNowCap').textContent=h1m>0?'1-min povprečje trenutne moči.':'1-min okno je trenutno prazno; prikazano je 5-min povprečje.';
-  $('h5m').textContent=fmtH(h5m);$('h1h').textContent=fmtH(j.hashrate1h||0);
-  $('h1d').textContent=fmtH(j.hashrate1d||0);$('h7d').textContent=fmtH(j.hashrate7d||0);
+  $('h5m').textContent=fmtH(h5m);$('h1h').textContent=fmtH(h1h);
+  $('h1d').textContent=fmtH(h1d);$('h7d').textContent=fmtH(h7d);
   $('shares').textContent=Math.round(j.shares||0).toLocaleString('sl-SI');
   $('bestdiff').textContent=(j.bestever||0).toLocaleString('sl-SI',{maximumFractionDigits:3});
   $('lastshare').textContent=j.lastshare?ago(j.lastshare):'···';
