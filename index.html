@@ -180,7 +180,7 @@ footer a:hover{text-decoration:underline}
 
 <div class="menu" id="menu">
   <div class="menuCard">
-    <h2><span class="ic"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#fb923c;fill:none;stroke-width:2"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg></span> Zgodovina majnanja <span class="x" id="menuX">✕</span></h2>
+    <h2><span class="ic"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#fb923c;fill:none;stroke-width:2"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg></span> Zgodovina mininga <span class="x" id="menuX">✕</span></h2>
     <div class="recgrid">
       <div class="rec"><b>Najboljša moč kadarkoli</b><span id="recBest">···</span></div>
       <div class="rec"><b>Najdaljša seja</b><span id="recLong">···</span></div>
@@ -237,7 +237,7 @@ function fmtYears(y){
   return '~'+Math.round(y)+' let';
 }
 function ago(ts){const s=Math.max(0,Math.floor(Date.now()/1000-ts));
-  if(s<90)return s+' s nazaj';if(s<3600)return Math.round(s/60)+' min nazaj';
+  if(s<10)return 'pravkar';if(s<90)return s+' s nazaj';if(s<3600)return Math.round(s/60)+' min nazaj';
   if(s<86400)return Math.round(s/3600)+' h nazaj';return Math.round(s/86400)+' dni nazaj';}
 function up(ts){const s=Math.max(0,Math.floor(Date.now()/1000-ts));
   if(s<3600)return Math.max(1,Math.round(s/60))+' min';if(s<86400)return Math.round(s/3600)+' h';return Math.round(s/86400)+' dni';}
@@ -332,6 +332,8 @@ function renderMenu(){
   }
   el.innerHTML=rows.join('');
 }
+function tickLastshare(){const el=$('lastshare');if(!el)return;el.textContent=window._ls?ago(window._ls):'···';}
+setInterval(tickLastshare,1000);
 function paint(j,net){
   const h1m=parseH(j.hashrate1m),h5m=parseH(j.hashrate5m),h1h=parseH(j.hashrate1h),h1d=parseH(j.hashrate1d),h7d=parseH(j.hashrate7d);
   const nows=Math.floor(Date.now()/1000);
@@ -345,10 +347,10 @@ function paint(j,net){
   $('h1d').textContent=fmtH(h1d);$('h7d').textContent=fmtH(h7d);
   $('shares').textContent=Math.round(j.shares||0).toLocaleString('sl-SI');
   $('bestdiff').textContent=(j.bestever||0).toLocaleString('sl-SI',{maximumFractionDigits:3});
-  $('lastshare').textContent=j.lastshare?ago(j.lastshare):'···';
+  window._ls=j.lastshare||0;tickLastshare();
   $('uptime').textContent=j.authorised?up(j.authorised):'···';
   $('dot').className='dot'+(active?' on':'');
-  $('state').textContent=active?'majna':'čaka na delo …';
+  $('state').textContent=active?'mining':'čaka na delo …';
   pushHist(showH);
   trackSession(active,showH,j.bestshare||0,j.authorised||0);
   /* loterija */
@@ -372,7 +374,7 @@ function paint(j,net){
 
 async function tick(){
   try{
-    const j=DEMO?demoData():await getJSON('/api/pool');
+    const j=DEMO?demoData():await getJSON('/api/pool?_='+Date.now());
     let net=DEMO?demoNet():null;
     if(!DEMO){try{net=await getJSON('/api/btc');}catch(e){}}
     paint(j,net||{});
