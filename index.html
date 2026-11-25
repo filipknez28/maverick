@@ -150,7 +150,7 @@ footer a:hover{text-decoration:underline}
     <div class="card"><b>Dela (shares)</b><div class="v" id="shares">···</div><div class="s">worker Maverick</div></div>
     <div class="card"><b>Najtežja dela (diff)</b><div class="v" id="bestdiff">···</div><div class="s">najtežja najdena dela</div></div>
     <div class="card"><b>Zadnja dela</b><div class="v" id="lastshare">···</div><div class="s">čas od zadnjega dela</div></div>
-    <div class="card"><b>Povezan od</b><div class="v" id="uptime">···</div><div class="s">avtorizacija na poolu</div></div>
+    <div class="card"><b>Povezan od</b><div class="v" id="uptime">···</div><div class="s">odkar Maverick deluje</div></div>
   </section>
 
   <section class="panel lot">
@@ -193,7 +193,7 @@ footer a:hover{text-decoration:underline}
       <div class="rec"><b>Številke sej</b><span id="recCount">···</span></div>
     </div>
     <div id="sessList"></div>
-    <div class="hint">Seje so vezane na poolov "povezan od": dolžina seje je prava tudi, ko je stran zaprta. Najboljšo moč in najtežji diff zapiše vsakič, ko stran prebere podatke s poola. Nova seja se začne, ko se Maverick znova poveže na pool.</div>
+    <div class="hint">Seja teče, dokler Maverick pošilja dele. Če je stran zaprta, preverim po številu del, ali je delal naprej: če je, seja teče dalje. Ponovnega priklopa, medtem ko je stran zaprta, pool ne pokaže, tega ne morem zaznati.</div>
     <button class="clear" id="clearHist">Počisti zgodovino</button>
   </div>
 </div>
@@ -269,33 +269,37 @@ function pushHist(v){
   drawSpark();
 }
 
-/* seje: vezane na poolov "povezan od" (authorised), dolžina je prava tudi, ko je stran zaprta */
+/* seje: beležim dejansko delo (števec del). Če je stran zaprta, preverim po številu del, ali je Maverick medtem delal naprej. */
 let sess=null,done=[];
 try{
   sess=JSON.parse(localStorage.getItem('maverick_sess')||'null');
   done=JSON.parse(localStorage.getItem('maverick_sessions')||'[]');
 }catch(e){}
-if(sess&&!sess.auth){done.push({start:sess.start,end:sess.last,best:sess.best||0,bestDiff:sess.bestDiff||0,sum:sess.sum||0,n:sess.n||0});sess=null;}
+sess=null; /* stare seje so vezane na poolov "povezan od", ki se po ponovnem priklopu ne spremeni; začnem znova */
 function saveS(){try{localStorage.setItem('maverick_sess',JSON.stringify(sess));localStorage.setItem('maverick_sessions',JSON.stringify(done));}catch(e){}}
-function trackSession(active,h,bd,auth){
+function endSess(endAt){
+  if(sess&&(sess.best>0||sess.n>0)){sess.end=endAt;done.push(sess);if(done.length>60)done=done.slice(-60);}
+  sess=null;saveS();
+}
+function trackSession(active,h,bd,shares,lsTs){
   const now=Date.now();
-  if(auth>0){
-    if(!sess||sess.auth!==auth){
-      if(sess&&(sess.best>0||sess.n>0)){sess.end=auth*1000;done.push(sess);if(done.length>60)done=done.slice(-60);}
-      sess={auth:auth,start:auth*1000,best:0,bestDiff:0,sum:0,n:0,last:now};
-    }
-    if(active){
+  const fresh=lsTs>0&&(now/1000-lsTs)<300;
+  if(sess){
+    if(!fresh&&sess.lastSeenFresh&&now-sess.lastSeenFresh>GAP)endSess(sess.lastSeenFresh);
+    else if(shares!=null&&sess.shares!=null&&shares<=sess.shares&&now-sess.last>GAP)endSess(sess.last);
+    else if(shares!=null&&sess.shares!=null&&shares<sess.shares)endSess(now);
+  }
+  if(!sess&&(fresh||active))sess={start:now,best:0,bestDiff:0,sum:0,n:0,last:now,shares:shares,lastSeenFresh:fresh?now:null};
+  if(sess){
+    if(fresh||active){
       if(h>sess.best)sess.best=h;
       if(h>0){sess.sum+=h;sess.n++;}
       if(bd>sess.bestDiff)sess.bestDiff=bd;
+      if(fresh)sess.lastSeenFresh=now;
     }
-    sess.last=now;saveS();
-  }else if(sess&&active){
-    if(h>sess.best)sess.best=h;
-    if(h>0){sess.sum+=h;sess.n++;}
-    sess.last=now;saveS();
-  }else if(sess&&now-sess.last>GAP){
-    sess.end=sess.last;done.push(sess);if(done.length>60)done=done.slice(-60);sess=null;saveS();
+    sess.last=now;
+    if(shares!=null)sess.shares=Math.max(shares,sess.shares||0);
+    saveS();
   }
   renderMenu();
 }
@@ -314,7 +318,7 @@ function renderMenu(){
   $('recLong').textContent=longMs>0?dur(longMs):'···';
   $('recCount').textContent=list.length?String(list.length):'···';
   const el=$('sessList');
-  if(!list.length){el.innerHTML='<div class="empty">Še ni zapisanih sej. Seje beležim samodejno, vezane na poolov "povezan od".</div>';return;}
+  if(!list.length){el.innerHTML='<div class="empty">Še ni zapisanih sej. Sejo zapisujem samodejno, ko Maverick pošilja dele.</div>';return;}
   const rows=[];
   const fmtT=t=>new Date(t).toLocaleTimeString('sl-SI',{hour:'2-digit',minute:'2-digit'});
   const fmtD=t=>new Date(t).toLocaleDateString('sl-SI',{day:'numeric',month:'short'});
@@ -346,11 +350,11 @@ function paint(j,net){
   $('shares').textContent=Math.round(j.shares||0).toLocaleString('sl-SI');
   $('bestdiff').textContent=(j.bestever||0).toLocaleString('sl-SI',{maximumFractionDigits:3});
   window._ls=j.lastshare||0;tickLastshare();
-  $('uptime').textContent=j.authorised?up(j.authorised):'···';
   $('dot').className='dot'+(active?' on':'');
   $('state').textContent=active?'mining':'čaka na delo …';
   pushHist(showH);
-  trackSession(active,showH,j.bestshare||0,j.authorised||0);
+  trackSession(active,showH,j.bestshare||0,(typeof j.shares==='number')?j.shares:null,j.lastshare||0);
+  $('uptime').textContent=sess?up(sess.start/1000):'···';
   /* loterija */
   const D=net.currentDifficulty||0,nh=net.currentHashrate||0;
   if(D>0&&showH>0){
