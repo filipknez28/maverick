@@ -27,11 +27,17 @@ header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 h1{font-size:26px;letter-spacing:.5px;font-weight:800}
 h1 span{color:var(--orange)}
 .sub{color:var(--dim);font-size:13px;margin-top:3px}
-.status{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);
+.status{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);
   border:1px solid var(--line);border-radius:999px;padding:7px 14px;background:var(--panel)}
 .dot{width:9px;height:9px;border-radius:50%;background:#6b7280}
 .dot.on{background:var(--green);box-shadow:0 0 10px rgba(52,211,153,.8);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+.burger{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel);
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin-left:auto;
+  transition:border-color .2s, transform .2s}
+.burger:hover{border-color:rgba(251,146,60,.5);transform:translateY(-1px)}
+.burger svg{width:20px;height:20px;stroke:var(--txt);stroke-width:2;stroke-linecap:round;fill:none}
+@media (max-width:640px){ .status{margin-left:0} .burger{margin-left:auto} }
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px 26px 20px;
   margin-top:22px;backdrop-filter:blur(6px);position:relative;overflow:hidden}
 .panel.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
@@ -41,12 +47,12 @@ h1 span{color:var(--orange)}
 .big b{font-size:64px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-1px;
   line-height:1;background:linear-gradient(90deg,#fff,#ffd9a8);-webkit-background-clip:text;background-clip:text;color:transparent}
 .big i{font-style:normal;color:var(--orange);font-weight:700;font-size:20px}
+.sparkcap{font-size:11.5px;color:var(--dim);margin-top:6px;letter-spacing:.6px}
+.spark{margin-top:18px}
+.spark svg{width:100%;height:72px;display:block}
 .avgs{display:flex;gap:26px;margin-top:18px;flex-wrap:wrap}
 .avgs b{display:block;font-size:11.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim);font-weight:600}
 .avgs span{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
-.spark{margin-top:18px}
-.spark svg{width:100%;height:72px;display:block}
-.spark .cap{font-size:11.5px;color:var(--dim);margin-top:6px;letter-spacing:.6px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:14px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;transition:border-color .2s, transform .2s}
 .card:hover{border-color:rgba(251,146,60,.4);transform:translateY(-2px)}
@@ -64,10 +70,32 @@ h1 span{color:var(--orange)}
 .ic{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,rgba(251,146,60,.25),rgba(234,88,12,.12));
   display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(251,146,60,.35)}
 .ic svg{width:14px;height:14px;stroke:var(--orange);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* meni (zgodovina) */
+.menu{position:fixed;inset:0;background:rgba(5,7,11,.72);backdrop-filter:blur(4px);z-index:50;display:none}
+.menu.open{display:block}
+.menuCard{position:absolute;top:14px;right:14px;bottom:14px;width:min(400px,calc(100vw - 28px));
+  background:#101319;border:1px solid var(--line);border-radius:20px;padding:20px 20px 16px;overflow:auto}
+.menuCard h2{font-size:15px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.menuCard h2 .x{margin-left:auto;width:32px;height:32px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--dim);font-size:15px}
+.recgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 6px}
+.rec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px}
+.rec b{display:block;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim);font-weight:600}
+.rec span{display:block;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:5px;color:var(--orange)}
+.sess{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-top:10px;background:var(--panel)}
+.sess .when{font-size:13px;color:var(--dim)}
+.sess .num{display:flex;gap:14px;flex-wrap:wrap;margin-top:7px;font-size:13.5px;font-variant-numeric:tabular-nums}
+.sess .num em{font-style:normal;color:var(--orange);font-weight:700}
+.sess.cur{border-color:rgba(52,211,153,.45)}
+.sess.cur .tag{color:var(--green);font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.menuCard .hint{color:var(--dim);font-size:12.5px;line-height:1.6;margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.menuCard .clear{margin-top:12px;width:100%;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.08);color:#fca5a5;
+  border-radius:12px;padding:10px;font-size:13px;cursor:pointer;font-weight:700}
+.menuCard .empty{color:var(--dim);font-size:13.5px;margin-top:14px;line-height:1.6}
 footer{margin-top:26px;color:var(--dim);font-size:13px;display:flex;gap:18px;flex-wrap:wrap;align-items:center}
 footer a{color:var(--orange);text-decoration:none}
 footer a:hover{text-decoration:underline}
-@media (max-width:640px){ .big b{font-size:44px} .status{margin-left:0} h1{font-size:21px} }
+@media (max-width:640px){ .big b{font-size:44px} h1{font-size:21px} }
 </style>
 </head>
 <body>
@@ -86,11 +114,15 @@ footer a:hover{text-decoration:underline}
       <div class="sub">solo Bitcoin loterija · pool.nerdminers.org</div>
     </div>
     <div class="status"><span class="dot" id="dot"></span><span id="state">povezujem …</span></div>
+    <button class="burger" id="burger" aria-label="Meni zgodovine">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
   </header>
 
   <section class="panel hero">
-    <div class="label">Trenutna moč (1 min)</div>
-    <div class="big"><b id="h1m">···</b><i id="h1mUnit">kH/s</i></div>
+    <div class="label">Trenutna moč</div>
+    <div class="big"><b id="hNow">···</b><i id="hNowUnit">kH/s</i></div>
+    <div class="sparkcap" id="hNowCap">1-min povprečje; kadar je 1-min okno prazno, pokažem 5-min.</div>
     <div class="spark">
       <svg id="sparkSvg" viewBox="0 0 600 72" preserveAspectRatio="none">
         <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
@@ -99,7 +131,7 @@ footer a:hover{text-decoration:underline}
         <path id="sparkFill" fill="url(#sg)" d=""></path>
         <polyline id="sparkLine" fill="none" stroke="#fb923c" stroke-width="2.2" stroke-linejoin="round" points=""></polyline>
       </svg>
-      <div class="cap">Potek moči (zapis med ogledom strani, do 1 ura)</div>
+      <div class="cap" id="sparkCap" style="font-size:11.5px;color:var(--dim);margin-top:6px;letter-spacing:.6px">Potek moči (zapis med ogledom strani, do 1 ura)</div>
     </div>
     <div class="avgs">
       <div><b>5 min</b><span id="h5m">···</span></div>
@@ -130,13 +162,28 @@ footer a:hover{text-decoration:underline}
     <span>Podatki:</span>
     <a href="https://pool.nerdminers.org/users/bc1qun0x63c3zc58du3hdurz6zyfslyvxnua9yhsjg" target="_blank" rel="noopener">moj profil na poolu</a>
     <a href="https://github.com/filipknez28/maverick" target="_blank" rel="noopener">GitHub repo</a>
-    <span>osveževanje vsakih 30 s · osveženo <span id="ts">···</span></span>
+    <span>osveževanje vsakih 10 s · osveženo <span id="ts">···</span></span>
   </footer>
+</div>
+
+<div class="menu" id="menu">
+  <div class="menuCard">
+    <h2><span class="ic"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:#fb923c;fill:none;stroke-width:2"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg></span> Zgodovina majnanja <span class="x" id="menuX">✕</span></h2>
+    <div class="recgrid">
+      <div class="rec"><b>Najboljša moč kadarkoli</b><span id="recBest">···</span></div>
+      <div class="rec"><b>Najdaljša seja</b><span id="recLong">···</span></div>
+      <div class="rec"><b>Številke sej</b><span id="recCount">···</span></div>
+    </div>
+    <div id="sessList"></div>
+    <div class="hint">Zapisovanje poteka, medtem ko je stran odprta. Seja se zaključi, ko majnanje umre 5 minut. Podatki ostanejo v tvojem brskalniku.</div>
+    <button class="clear" id="clearHist">Počisti zgodovino</button>
+  </div>
 </div>
 
 <script>
 const $=id=>document.getElementById(id);
 const DEMO=new URLSearchParams(location.search).has('demo');
+const REFRESH=10000, GAP=5*60*1000;
 
 function getJSON(url){const r=fetch(url,{cache:'no-store'});return r.then(x=>{if(!x.ok)throw 0;return x.json();});}
 
@@ -156,7 +203,6 @@ function fmtH(h){
 /* velika števila v slovenščini: 1,5 bilijarde, 28,5 bilijona, 10 bilijard */
 function bigSlo(x){
   if(!isFinite(x)||x<=0)return '···';
-  /* moška: trilijon, bilijon, milijon; ženska: trilijarda, bilijarda, milijarda */
   const W=[[1e18,'trilijonov','trilijona'],[1e15,'bilijard','bilijarde'],
            [1e12,'bilijonov','bilijona'],[1e9,'milijard','milijarde'],
            [1e6,'milijonov','milijona'],[1e3,'tisoč','tisoč']];
@@ -164,7 +210,7 @@ function bigSlo(x){
     if(x>=f){const v=x/f;
       let vs=v<10?v.toFixed(1):Math.round(v).toString();
       vs=vs.replace('.',',').replace(/,0$/,'');
-      const word=(v>=5&&!vs.includes(','))?pl:gs; /* 5+ cela števila: množina */
+      const word=(v>=5&&!vs.includes(','))?pl:gs;
       return vs+' '+word;}
   }
   return Math.round(x).toLocaleString('sl-SI');
@@ -182,6 +228,11 @@ function ago(ts){const s=Math.max(0,Math.floor(Date.now()/1000-ts));
   if(s<86400)return Math.round(s/3600)+' h nazaj';return Math.round(s/86400)+' dni nazaj';}
 function up(ts){const s=Math.max(0,Math.floor(Date.now()/1000-ts));
   if(s<3600)return Math.max(1,Math.round(s/60))+' min';if(s<86400)return Math.round(s/3600)+' h';return Math.round(s/86400)+' dni';}
+function dur(ms){const s=Math.max(0,Math.round(ms/1000));
+  if(s<3600)return Math.max(1,Math.round(s/60))+' min';
+  const h=Math.floor(s/3600),m=Math.round((s%3600)/60);
+  if(h<24)return h+' h '+m+' min';
+  return Math.floor(h/24)+' dni '+(h%24)+' h';}
 
 /* graf: potek moči */
 let hist=[];try{hist=JSON.parse(localStorage.getItem('maverick_hist')||'[]');}catch(e){}
@@ -196,29 +247,87 @@ function drawSpark(){
 function pushHist(v){
   if(!(v>0))return;const now=Date.now();
   hist.push({t:now,v:v});while(hist.length&&now-hist[0].t>3600000)hist.shift();
-  if(hist.length>120)hist=hist.slice(-120);
+  if(hist.length>720)hist=hist.slice(-720);
   try{localStorage.setItem('maverick_hist',JSON.stringify(hist));}catch(e){}
   drawSpark();
 }
 
+/* seje: zapis dejanskega majnanja, dokler je stran odprta */
+let sess=null,done=[];
+try{
+  sess=JSON.parse(localStorage.getItem('maverick_sess')||'null');
+  done=JSON.parse(localStorage.getItem('maverick_sessions')||'[]');
+}catch(e){}
+const now0=Date.now();
+if(sess&&sess.active&&now0-sess.last>GAP){sess.end=sess.last;sess.active=false;done.push(sess);sess=null;saveS();}
+function saveS(){try{localStorage.setItem('maverick_sess',JSON.stringify(sess));localStorage.setItem('maverick_sessions',JSON.stringify(done));}catch(e){}}
+function trackSession(active,h){
+  const now=Date.now();
+  if(active){
+    if(!sess||!sess.active)sess={start:now,last:now,best:0,sum:0,n:0,active:true};
+    if(h>sess.best)sess.best=h;
+    if(h>0){sess.sum+=h;sess.n++;}
+    sess.last=now;saveS();
+  }else if(sess&&sess.active&&now-sess.last>GAP){
+    sess.end=sess.last;sess.active=false;done.push(sess);
+    if(done.length>60)done=done.slice(-60);sess=null;saveS();
+  }
+  renderMenu();
+}
+function allSessions(){const a=done.slice();if(sess&&sess.active)a.push(sess);return a;}
+function renderMenu(){
+  const list=allSessions();
+  let bestAll=0,longMs=0;
+  for(const s of list){
+    if(s.best>bestAll)bestAll=s.best;
+    const e=s.end||s.last;const d=Math.max(0,e-s.start);
+    if(d>longMs)longMs=d;
+  }
+  $('recBest').textContent=bestAll>0?fmtH(bestAll):'···';
+  $('recLong').textContent=longMs>0?dur(longMs):'···';
+  $('recCount').textContent=list.length?String(list.length):'···';
+  const el=$('sessList');
+  if(!list.length){el.innerHTML='<div class="empty">Še ni zapisanih sej. Ko stran pusti odprto, medtem ko Maverick majna, se seje začnejo zapisovati same.</div>';return;}
+  const rows=[];
+  const fmtT=t=>new Date(t).toLocaleTimeString('sl-SI',{hour:'2-digit',minute:'2-digit'});
+  const fmtD=t=>new Date(t).toLocaleDateString('sl-SI',{day:'numeric',month:'short'});
+  if(sess&&sess.active){
+    const e=sess.last,d=Math.max(0,e-sess.start),avg=sess.n?sess.sum/sess.n:0;
+    rows.push('<div class="sess cur"><div class="when"><span class="tag">trenutna seja</span> · '+fmtD(sess.start)+' '+fmtT(sess.start)+' → zdaj</div>'+
+      '<div class="num"><span>dolžina <em>'+dur(d)+'</em></span><span>povprečje <em>'+fmtH(avg)+'</em></span><span>najboljše <em>'+fmtH(sess.best)+'</em></span></div></div>');
+  }
+  for(let i=done.length-1;i>=0;i--){
+    const s=done[i],e=s.end||s.last,d=Math.max(0,e-s.start),avg=s.n?s.sum/s.n:0;
+    rows.push('<div class="sess"><div class="when">'+fmtD(s.start)+' '+fmtT(s.start)+' → '+fmtT(e)+'</div>'+
+      '<div class="num"><span>dolžina <em>'+dur(d)+'</em></span><span>povprečje <em>'+fmtH(avg)+'</em></span><span>najboljše <em>'+fmtH(s.best)+'</em></span></div></div>');
+  }
+  el.innerHTML=rows.join('');
+}
 function paint(j,net){
-  const h1m=j.hashrate1m||0;
-  $('h1m').textContent=(h1m/1e3).toLocaleString('sl-SI',{maximumFractionDigits:0});
-  $('h1mUnit').textContent='kH/s';
-  $('h5m').textContent=fmtH(j.hashrate5m||0);$('h1h').textContent=fmtH(j.hashrate1h||0);
+  const h1m=parseH(j.hashrate1m)||0,h5m=parseH(j.hashrate5m)||0;
+  const nows=Math.floor(Date.now()/1000);
+  const freshShare=j.lastshare&&nows-j.lastshare<900;
+  const active=h1m>0||h5m>0||freshShare;
+  const showH=h1m>0?h1m:h5m;
+  $('hNow').textContent=(showH/1e3).toLocaleString('sl-SI',{maximumFractionDigits:0});
+  $('hNowUnit').textContent='kH/s';
+  $('hNowCap').textContent=h1m>0?'1-min povprečje trenutne moči.':'1-min okno je trenutno prazno; prikazano je 5-min povprečje.';
+  $('h5m').textContent=fmtH(h5m);$('h1h').textContent=fmtH(j.hashrate1h||0);
   $('h1d').textContent=fmtH(j.hashrate1d||0);$('h7d').textContent=fmtH(j.hashrate7d||0);
   $('shares').textContent=Math.round(j.shares||0).toLocaleString('sl-SI');
   $('bestdiff').textContent=(j.bestever||0).toLocaleString('sl-SI',{maximumFractionDigits:3});
   $('lastshare').textContent=j.lastshare?ago(j.lastshare):'···';
   $('uptime').textContent=j.authorised?up(j.authorised):'···';
-  $('dot').className='dot'+(h1m>0?' on':'');$('state').textContent=h1m>0?'majna':'čaka na delo …';
-  pushHist(h1m);
+  $('dot').className='dot'+(active?' on':'');
+  $('state').textContent=active?'majna':'čaka na delo …';
+  pushHist(showH);
+  trackSession(active,showH);
   /* loterija */
   const D=net.currentDifficulty||0,nh=net.currentHashrate||0;
-  if(D>0&&h1m>0){
-    const perBlock=D*Math.pow(2,32);          /* povprečno št. hashev na blok */
-    const share=h1m/nh;                        /* delež moči omrežja */
-    const blocksDay=h1m*86400/perBlock;        /* pričakovano št. blokov na dan */
+  if(D>0&&showH>0){
+    const perBlock=D*Math.pow(2,32);
+    const share=showH/nh;
+    const blocksDay=showH*86400/perBlock;
     const years=blocksDay>0?1/blocksDay/365.25:Infinity;
     $('odShare').textContent='1 od približno '+bigSlo(1/share);
     $('odDay').textContent='približno 1 na '+bigSlo(1/blocksDay)+' dni';
@@ -241,12 +350,24 @@ async function tick(){
   }catch(e){$('state').textContent='pool ni dosegljiv';$('dot').className='dot';}
 }
 function demoData(){const h=Math.round(560+Math.random()*180)*1e3;
-  return{hashrate1m:h,hashrate5m:h*0.8,hashrate1h:h*0.5,hashrate1d:6.41e3,hashrate7d:922,
+  return{hashrate1m:String(Math.round(h/1000))+'K',hashrate5m:String(Math.round(h*0.8/1000))+'K',hashrate1h:String(Math.round(h*0.5/1000))+'K',hashrate1d:'6.41K',hashrate7d:'922',
     shares:131+Math.floor(Math.random()*40),bestever:0.098,lastshare:Math.floor(Date.now()/1000)-40,
     authorised:Math.floor(Date.now()/1000)-1700};}
 function demoNet(){return{currentDifficulty:1.348e14,currentHashrate:9.7e20};}
 
-tick();setInterval(tick,30000);
+/* meni */
+function openMenu(o){$('menu').classList.toggle('open',o);if(o)renderMenu();}
+$('burger').addEventListener('click',()=>openMenu(true));
+$('menuX').addEventListener('click',()=>openMenu(false));
+$('menu').addEventListener('click',e=>{if(e.target===$('menu'))openMenu(false);});
+$('clearHist').addEventListener('click',()=>{
+  if(!confirm('Počistim vso zgodovino sej?'))return;
+  sess=null;done=[];hist=[];saveS();
+  try{localStorage.removeItem('maverick_hist');}catch(e){}
+  drawSpark();renderMenu();
+});
+renderMenu();
+tick();setInterval(tick,REFRESH);
 </script>
 </body>
 </html>
