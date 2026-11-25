@@ -68,6 +68,12 @@ h1 span{color:var(--orange)}
 .spark{margin-top:20px;position:relative}
 .spark svg{width:100%;height:96px;display:block;touch-action:none;cursor:crosshair}
 .spark svg polyline{filter:drop-shadow(0 0 6px rgba(251,146,60,.35))}
+.ranges{display:flex;gap:8px;margin-top:20px}
+.rbtn{border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--dim);
+  font:600 12px Inter,ui-sans-serif,sans-serif;letter-spacing:1px;padding:7px 15px;border-radius:999px;
+  cursor:pointer;transition:color .2s,border-color .2s,background .2s}
+.rbtn:hover{color:var(--txt);border-color:rgba(255,255,255,.25)}
+.rbtn.on{color:#fff;background:linear-gradient(135deg,rgba(251,146,60,.3),rgba(234,88,12,.15));border-color:rgba(251,146,60,.5)}
 .tip{position:absolute;left:0;top:0;transform:translate(-50%,-130%);visibility:hidden;z-index:5;
   background:rgba(17,19,25,.92);border:1px solid rgba(255,255,255,.14);color:var(--txt);
   font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:10px;white-space:nowrap;
@@ -166,6 +172,11 @@ footer a:hover{opacity:.8;text-decoration:underline}
     <div class="big"><b id="hNow">···</b><i id="hNowUnit">kH/s</i></div>
     <div class="sparkcap" id="hNowCap">1-min povprečje; kadar je 1-min okno prazno, pokažem 5-min.</div>
     <div class="spark">
+      <div class="ranges">
+        <button class="rbtn" data-r="3600000">1 H</button>
+        <button class="rbtn" data-r="21600000">6 H</button>
+        <button class="rbtn" data-r="86400000">24 H</button>
+      </div>
       <svg id="sparkSvg" viewBox="0 0 600 96" preserveAspectRatio="none">
         <defs>
           <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
@@ -299,23 +310,55 @@ function dur(ms){const s=Math.max(0,Math.round(ms/1000));
   const h=Math.floor(s/3600),m=Math.round((s%3600)/60);
   if(h<24)return h+' h '+m+' min';
   return Math.floor(h/24)+' dni '+(h%24)+' h';}
-/* graf: potek moči */
+/* graf: potek moči z obdobji 1 h / 6 h / 24 h */
 let hist=[];try{hist=JSON.parse(localStorage.getItem('maverick_hist')||'[]');}catch(e){}
+let view=[]; /* trenutno prikazane točke (glede na izbrano obdobje) */
+const RANGES=[3600000,21600000,86400000];
+let RANGE=parseInt(localStorage.getItem('maverick_range')||'3600000',10);
+if(!RANGES.includes(RANGE))RANGE=3600000;
+function sparkPts(range){
+  const now=Date.now();
+  const win=hist.filter(p=>now-p.t<=range);
+  if(win.length<2)return [];
+  if(win.length<=620)return win;
+  const out=[],step=win.length/620;
+  for(let i=0;i<620;i++)out.push(win[Math.min(win.length-1,Math.round(i*step))]);
+  return out;
+}
+function updCap(){
+  const c=$('sparkCap');if(!c)return;
+  const name=RANGE===3600000?'1 ura':(RANGE===21600000?'6 ur':'24 ur');
+  let t='Potek moči ('+name+') · zapis se dela, medtem ko je stran odprta, do 24 ur';
+  if(view.length>1&&Date.now()-view[0].t<RANGE-30000)t+=' · podatki od '+new Date(view[0].t).toLocaleTimeString('sl-SI',{hour:'2-digit',minute:'2-digit'});
+  c.textContent=t;
+}
 function drawSpark(){
   const el=$('sparkLine'),fl=$('sparkFill');if(!el)return;
-  if(hist.length<2){el.setAttribute('points','');fl.setAttribute('d','');return;}
-  const vs=hist.map(p=>p.v),mx=Math.max(...vs,1),mn=Math.min(...vs);
-  const pts=hist.map((p,i)=>{const x=i/(hist.length-1)*600;const y=88-((p.v-mn)/(mx-mn||1))*78;return x.toFixed(1)+','+y.toFixed(1);});
+  if(typeof sparkHide==='function')sparkHide();
+  view=sparkPts(RANGE);
+  if(view.length<2){el.setAttribute('points','');fl.setAttribute('d','');updCap();return;}
+  const vs=view.map(p=>p.v),mx=Math.max(...vs,1),mn=Math.min(...vs);
+  const pts=view.map((p,i)=>{const x=i/(view.length-1)*600;const y=88-((p.v-mn)/(mx-mn||1))*78;return x.toFixed(1)+','+y.toFixed(1);});
   el.setAttribute('points',pts.join(' '));
   fl.setAttribute('d','M0,96 L'+pts.join(' L')+' L600,96 Z');
+  updCap();
 }
 function pushHist(v){
   if(!(v>0))return;const now=Date.now();
-  hist.push({t:now,v:v});while(hist.length&&now-hist[0].t>3600000)hist.shift();
-  if(hist.length>720)hist=hist.slice(-720);
+  hist.push({t:now,v:v});while(hist.length&&now-hist[0].t>90000000)hist.shift();
+  if(hist.length>9000)hist=hist.slice(-9000);
   try{localStorage.setItem('maverick_hist',JSON.stringify(hist));}catch(e){}
   drawSpark();
 }
+document.querySelectorAll('.rbtn').forEach(b=>{
+  if(parseInt(b.dataset.r,10)===RANGE)b.classList.add('on');
+  b.addEventListener('click',()=>{
+    RANGE=parseInt(b.dataset.r,10);
+    try{localStorage.setItem('maverick_range',String(RANGE));}catch(e){}
+    document.querySelectorAll('.rbtn').forEach(x=>x.classList.toggle('on',x===b));
+    drawSpark();
+  });
+});
 
 /* seje: beležim dejansko delo (števec del). Če je stran zaprta, preverim po številu del, ali je Maverick medtem delal naprej. */
 let sess=null,done=[];
@@ -387,17 +430,17 @@ setInterval(tickLastshare,1000);
 const spSvg=$('sparkSvg'),spCross=$('crossX'),spDot=$('crossDot'),spTip=$('sparkTip');
 let spDrag=false;
 function sparkShow(e){
-  if(!spSvg||hist.length<2)return;
+  if(!spSvg||view.length<2)return;
   const r=spSvg.getBoundingClientRect();
   const f=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
-  const i=Math.round(f*(hist.length-1)),p=hist[i];
-  const vs=hist.map(q=>q.v),mx=Math.max(...vs,1),mn=Math.min(...vs);
+  const i=Math.round(f*(view.length-1)),p=view[i];
+  const vs=view.map(q=>q.v),mx=Math.max(...vs,1),mn=Math.min(...vs);
   const x=(i/(hist.length-1)*600).toFixed(1);
   const y=88-((p.v-mn)/(mx-mn||1))*78;
   spCross.setAttribute('x1',x);spCross.setAttribute('x2',x);spCross.setAttribute('visibility','visible');
   spDot.setAttribute('cx',x);spDot.setAttribute('cy',y.toFixed(1));spDot.setAttribute('visibility','visible');
   spTip.textContent=fmtH(p.v)+' · '+new Date(p.t).toLocaleTimeString('sl-SI',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  spTip.style.left=(i/(hist.length-1)*100)+'%';
+  spTip.style.left=(i/(view.length-1)*100)+'%';
   spTip.style.top=y.toFixed(1)+'px';
   spTip.style.visibility='visible';
 }
