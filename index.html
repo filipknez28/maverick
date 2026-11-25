@@ -378,7 +378,7 @@ async function tick(){
     let net=DEMO?demoNet():null;
     if(!DEMO){try{net=await getJSON('/api/btc');}catch(e){}}
     paint(j,net||{});
-  }catch(e){$('state').textContent='pool ni dosegljiv';$('dot').className='dot';}
+  }catch(e){$('state').textContent='ni povezan';$('dot').className='dot';}
 }
 function demoData(){const h=Math.round(560+Math.random()*180)*1e3;
   return{hashrate1m:String(Math.round(h/1000))+'K',hashrate5m:String(Math.round(h*0.8/1000))+'K',hashrate1h:String(Math.round(h*0.5/1000))+'K',hashrate1d:'6.41K',hashrate7d:'922',
