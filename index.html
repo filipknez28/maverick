@@ -158,6 +158,18 @@ footer a:hover{text-decoration:underline}
     <div class="note">Vsak najdeni share je en tiket v loteriji. Nagrada za blok gre v celoti tistemu, ki blok najde. NerdMiner je majhen, zato je zadetek redkost; prav to je duh solo mininga.</div>
   </section>
 
+  <section class="panel">
+    <div class="lot-title"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18.5 21 12 16.5 5.5 21l2-7.5L2 9h7z"/></svg></span> Zadetki po svetu</div>
+    <div class="row"><span>NerdMiner naprave (ESP32)</span><b>0 najdenih blokov</b></div>
+    <div class="row"><span>Igralcev na tem poolu</span><b>~8.900 uporabnikov</b></div>
+    <div class="row"><span>Dokumentirane zmage z majhnimi napravami (Bitaxe)</span><b>4 od julija 2024</b></div>
+    <div class="win"><b>24. 7. 2024 · blok 853.742</b><span>solo.ckpool, Bitaxe, ~3,19 BTC</span></div>
+    <div class="win"><b>10. 3. 2025 · blok 887.212</b><span>solo.ckpool, Bitaxe ~480 GH/s, ~3,15 BTC</span></div>
+    <div class="win"><b>21. 11. 2025 · blok 924.569</b><span>solo.ckpool, ~6 TH/s, ~3,15 BTC</span></div>
+    <div class="win"><b>10. 7. 2026 · blok 957.382</b><span>public-pool.io, Bitaxe ~1 TH/s, ~3,14 BTC</span></div>
+    <div class="note">Noben NerdMiner z ESP32 čipom še ni našel bloka: v nobenem seznamu ali sledilniku ni zabeleženega zadetka, tudi števec na našem poolu stoji na 0. Zmage zgoraj so z Bitaxe napravami, ki so milijonkrat hitrejše. Vsak del (share) pa ima enako možnost kot njihov: če Maverick zaden, je nagrada v celoti tvoja. Vir: <a href="https://bitminer24.de/en/blogs/krypto-news/nerdminer-found-a-block" target="_blank" rel="noopener">bitminer24.de, pregled dokumentiranih zadetkov 2024–2026</a>.</div>
+  </section>
+
   <footer>
     <span>Podatki:</span>
     <a href="https://pool.nerdminers.org/users/bc1qun0x63c3zc58du3hdurz6zyfslyvxnua9yhsjg" target="_blank" rel="noopener">moj profil na poolu</a>
@@ -234,6 +246,12 @@ function dur(ms){const s=Math.max(0,Math.round(ms/1000));
   const h=Math.floor(s/3600),m=Math.round((s%3600)/60);
   if(h<24)return h+' h '+m+' min';
   return Math.floor(h/24)+' dni '+(h%24)+' h';}
+
+/* zadetki */
+.win{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed #2a2a33;font-size:13px}
+.win:last-of-type{border-bottom:none}
+.win b{color:#fde7cf;font-weight:600}
+.win span{color:#9b9ba6;text-align:right}
 
 /* graf: potek moči */
 let hist=[];try{hist=JSON.parse(localStorage.getItem('maverick_hist')||'[]');}catch(e){}
