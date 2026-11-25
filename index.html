@@ -96,6 +96,11 @@ footer{margin-top:26px;color:var(--dim);font-size:13px;display:flex;gap:18px;fle
 footer a{color:var(--orange);text-decoration:none}
 footer a:hover{text-decoration:underline}
 @media (max-width:640px){ .big b{font-size:44px} h1{font-size:21px} }
+/* zadetki */
+.win{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed #2a2a33;font-size:13px}
+.win:last-of-type{border-bottom:none}
+.win b{color:#fde7cf;font-weight:600}
+.win span{color:#9b9ba6;text-align:right}
 </style>
 </head>
 <body>
@@ -246,13 +251,6 @@ function dur(ms){const s=Math.max(0,Math.round(ms/1000));
   const h=Math.floor(s/3600),m=Math.round((s%3600)/60);
   if(h<24)return h+' h '+m+' min';
   return Math.floor(h/24)+' dni '+(h%24)+' h';}
-
-/* zadetki */
-.win{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed #2a2a33;font-size:13px}
-.win:last-of-type{border-bottom:none}
-.win b{color:#fde7cf;font-weight:600}
-.win span{color:#9b9ba6;text-align:right}
-
 /* graf: potek moči */
 let hist=[];try{hist=JSON.parse(localStorage.getItem('maverick_hist')||'[]');}catch(e){}
 function drawSpark(){
