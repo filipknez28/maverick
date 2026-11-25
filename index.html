@@ -398,9 +398,9 @@ function trackSession(active,h,bd,shares,lsTs){
   const now=Date.now();
   const fresh=lsTs>0&&(now/1000-lsTs)<300;
   if(sess){
-    if(shares!=null&&sess.shares!=null&&shares<sess.shares)endSess(now); /* števec del ponastavljen: ESP se je ponovno zagnal, začne se prava nova seja */
-    else if(!fresh&&sess.lastSeenFresh&&now-sess.lastSeenFresh>GAP)endSess(sess.lastSeenFresh); /* dlje časa brez del: seja končana */
-    else if(shares!=null&&sess.shares!=null&&shares===sess.shares&&now-sess.last>GAP)endSess(sess.last); /* ni napredka */
+    if(shares!=null&&sess.shares!=null&&shares<sess.shares)endSess(sess.lastShareMs||now); /* števec del ponastavljen: ESP se je ponovno zagnal, začne se prava nova seja */
+    else if(!fresh&&sess.lastSeenFresh&&now-sess.lastSeenFresh>GAP)endSess(sess.lastShareMs||sess.lastSeenFresh); /* izklop: seja se konča pri zadnjem delu, odštetega je zamik detekcije */
+    else if(shares!=null&&sess.shares!=null&&shares===sess.shares&&now-sess.last>GAP)endSess(sess.lastShareMs||sess.last); /* ni napredka */
   }
   if(!sess&&(fresh||active))sess={start:now,best:0,bestDiff:0,sum:0,n:0,last:now,shares:shares,lastSeenFresh:fresh?now:null};
   if(sess){
@@ -408,7 +408,7 @@ function trackSession(active,h,bd,shares,lsTs){
       if(h>sess.best)sess.best=h;
       if(h>0){sess.sum+=h;sess.n++;}
       if(bd>sess.bestDiff)sess.bestDiff=bd;
-      if(fresh)sess.lastSeenFresh=now;
+      if(fresh){sess.lastSeenFresh=now;if(lsTs)sess.lastShareMs=lsTs*1000;} /* pravi trenutek zadnjega dela, brez zamika detekcije */
     }
     sess.last=now;
     if(shares!=null)sess.shares=Math.max(shares,sess.shares||0);
@@ -436,8 +436,9 @@ function renderMenu(){
   const fmtT=t=>new Date(t).toLocaleTimeString('sl-SI',{hour:'2-digit',minute:'2-digit'});
   const fmtD=t=>new Date(t).toLocaleDateString('sl-SI',{day:'numeric',month:'short'});
   if(sess){
-    const d=Math.max(0,Date.now()-sess.start),avg=sess.n?sess.sum/sess.n:0;
-    rows.push('<div class="sess cur"><div class="when"><span class="tag">trenutna seja</span> · '+fmtD(sess.start)+' '+fmtT(sess.start)+' → zdaj</div>'+
+    const nowMs=Date.now(),over=(sess.lastShareMs&&nowMs-sess.lastShareMs>150000);
+    const endMs=over?sess.lastShareMs:nowMs,d=Math.max(0,endMs-sess.start),avg=sess.n?sess.sum/sess.n:0;
+    rows.push('<div class="sess cur"><div class="when"><span class="tag">trenutna seja</span> · '+fmtD(sess.start)+' '+fmtT(sess.start)+' → '+(over?fmtT(endMs):'zdaj')+'</div>'+
       '<div class="num"><span>dolžina <em>'+dur(d)+'</em></span><span>povprečje <em>'+fmtH(avg)+'</em></span><span>najboljše <em>'+(sess.best>0?fmtH(sess.best):'···')+'</em></span><span>max diff <em>'+(sess.bestDiff>0?sess.bestDiff.toLocaleString('sl-SI',{maximumFractionDigits:3}):'···')+'</em></span></div></div>');
   }
   for(let i=done.length-1;i>=0;i--){
