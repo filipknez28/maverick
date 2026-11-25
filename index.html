@@ -156,25 +156,24 @@ function fmtH(h){
 /* velika števila v slovenščini: 1,5 bilijarde, 28,5 bilijona, 10 bilijard */
 function bigSlo(x){
   if(!isFinite(x)||x<=0)return '···';
-  const W=[[1e18,'trilijon','trilijona','trilijonov'],[1e15,'bilijarda','bilijarde','bilijard'],
-           [1e12,'bilijon','bilijona','bilijonov'],[1e9,'milijarda','milijarde','milijard'],
-           [1e6,'milijon','milijona','milijonov'],[1e3,'tisoč','tisoč','tisoč']];
-  for(const[f,a,b,c]of W){
+  /* moška: trilijon, bilijon, milijon; ženska: trilijarda, bilijarda, milijarda */
+  const W=[[1e18,'trilijonov','trilijona'],[1e15,'bilijard','bilijarde'],
+           [1e12,'bilijonov','bilijona'],[1e9,'milijard','milijarde'],
+           [1e6,'milijonov','milijona'],[1e3,'tisoč','tisoč']];
+  for(const[f,pl,gs]of W){
     if(x>=f){const v=x/f;
-      const vs=(v<10?v.toFixed(1):v<100?Math.round(v):Math.round(v)).toString().replace('.',',');
-      const word=(v>=2&&v<5&&!vs.includes(','))?b:c;
-      return vs.replace(/,0$/,'')+' '+word;}
+      let vs=v<10?v.toFixed(1):Math.round(v).toString();
+      vs=vs.replace('.',',').replace(/,0$/,'');
+      const word=(v>=5&&!vs.includes(','))?pl:gs; /* 5+ cela števila: množina */
+      return vs+' '+word;}
   }
   return Math.round(x).toLocaleString('sl-SI');
 }
 function fmtYears(y){
   if(!isFinite(y)||y<=0)return '···';
-  const W=[[1e12,'trilijona','trilijonov'],[1e9,'bilijona','bilijonov'],[1e6,'milijona','milijonov']];
-  for(const[f,s1,s2]of W){
-    if(y>=f){const v=y/f;
-      const vs=(v<10?v.toFixed(1):Math.round(v)).toString().replace('.',',').replace(/,0$/,'');
-      return '~'+vs+' '+(v>=5||vs.includes(',')?s2:s1)+' let';}
-  }
+  if(y>=1e12)return '~'+bigSlo(y/1e12)+' trilijonov let';
+  if(y>=1e9)return '~'+bigSlo(y/1e9)+' milijard let';
+  if(y>=1e6)return '~'+bigSlo(y/1e6)+' milijonov let';
   if(y>=1e3)return '~'+Math.round(y).toLocaleString('sl-SI')+' let';
   return '~'+Math.round(y)+' let';
 }
